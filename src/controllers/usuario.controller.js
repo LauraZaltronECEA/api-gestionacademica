@@ -1,11 +1,11 @@
 const UsuarioService = require('../services/usuario.service');
-const pool = require('../database/connection').pool
+const pool = require('../db/connection').pool
 
 const service = new UsuarioService(pool)
 
-async function getUsuarios(req, res, next) {
+async function getUsuarios(req, res, next){
     try{
-        const data = await service.getAll(req.query.incluirBajas)
+        const data = await service.get(req.query.incluirBajas)
         res.json(data)
     }
     catch (error) {
@@ -51,4 +51,12 @@ async function deleteUsuario(req, res, next) {
     catch (error) {
         next(error)
     }
+}
+
+module.exports = {
+    getUsuarios,
+    getUsuario,
+    postUsuario,
+    putUsuario,
+    deleteUsuario
 }

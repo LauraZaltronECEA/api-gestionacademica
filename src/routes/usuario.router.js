@@ -1,12 +1,14 @@
-const router = require('express').Router();
-const { getUsuarios, getUsuario, postUsuario, putUsuario, deleteUsuario } = require('../controllers/usuario.controller');
-const {validator} = require('../middlewares/validatorHandler');
-const { createUsuarioSchema, updateUsuarioSchema, getUsuarioSchema } = require('../schemas/usuario.schema');
+const express = require('express');
+const usuarioRouter = express.Router();
 
-router.get('/', getUsuarios);
-router.get('/:id', validator(getUsuarioSchema, 'params'), getUsuario);
-router.post('/', validator(createUsuarioSchema, 'body'), postUsuario);
-router.put('/:id', validator(getUsuarioSchema, 'params'), validator(updateUsuarioSchema, 'body'), putUsuario);
-router.delete('/:id', validator(getUsuarioSchema, 'params'), deleteUsuario);
+const{ getUsuarios, getUsuario, postUsuario, putUsuario, deleteUsuario } = require('../controllers/usuario.controller.js');
+const validator = require('../middleware/validatorHandler');
+const { createUsuarioSchema, updateUsuarioSchema, getUsuarioSchema } = require('../schemas/usuario.schema.js');
 
-module.exports = router;
+usuarioRouter.get('/', getUsuarios);
+usuarioRouter.get('/:id', validator(getUsuarioSchema, 'params'), getUsuario);
+usuarioRouter.post('/', validator(createUsuarioSchema, 'body'), postUsuario);
+usuarioRouter.put('/:id', validator(getUsuarioSchema, 'params'), validator(updateUsuarioSchema, 'body'), putUsuario);
+usuarioRouter.delete('/:id', validator(getUsuarioSchema, 'params'), deleteUsuario);
+
+module.exports = usuarioRouter;
