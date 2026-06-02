@@ -4,10 +4,11 @@ const { testConnection } = require('./database/connection');
 
 require('dotenv').config();
 
-const usuarioRouter = require('./routes/usuarioRoutes');
-const alumnoRouter = require('./routes/alumnoRoutes');
-const materiaRouter = require('./routes/materiaRoutes');
-const inscripcionRouter = require('./routes/inscripcionRoutes');
+const usuarioRouter = require('./routes/usuario.router');
+const alumnoRouter = require('./routes/alumno.router');
+const materiaRouter = require('./routes/materia.router');
+const inscripcionRouter = require('./routes/inscripcion.router');
+
 const { errorLog, errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
