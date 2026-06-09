@@ -1,7 +1,7 @@
-const { pool } = require('../db/connection')
+const pool = require('../db')
 
 class UsuarioService {
-    async get(incluirBajas) {
+    async getAll(incluirBajas) {
         let sql = `SELECT u.*, r.rol FROM usuario u INNER JOIN rol r ON u.rol = r.id`
         if (!incluirBajas) sql += ' WHERE u.fecha_baja IS NULL'
         const [rows] = await pool.query(sql)
