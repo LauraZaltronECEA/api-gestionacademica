@@ -10,3 +10,5 @@ alumnoRouter.get('/:id', validator(getAlumnoSchema, 'params'), getAlumno);
 alumnoRouter.post('/', validator(createAlumnoSchema, 'body'), postAlumno);
 alumnoRouter.put('/:id', validator(getAlumnoSchema, 'params'), validator(updateAlumnoSchema, 'body'), putAlumno);
 alumnoRouter.delete('/:id', validator(getAlumnoSchema, 'params'), deleteAlumno);
+
+module.exports = alumnoRouter
