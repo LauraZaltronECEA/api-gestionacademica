@@ -2,7 +2,7 @@ const express = require('express');
 const alumnoRouter = express.Router();
 
 const{ getAlumnos, getAlumno, postAlumno, putAlumno, deleteAlumno } = require('../controllers/alumno.controller.js');
-const validator = require('../middleware/validatorHandler');
+const {validator} = require('../middleware/validatorHandler');
 const { createAlumnoSchema, updateAlumnoSchema, getAlumnoSchema } = require('../schemas/alumno.schema.js');
 
 alumnoRouter.get('/', getAlumnos);

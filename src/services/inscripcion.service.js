@@ -10,21 +10,27 @@ class InscripcionService {
         return { id: result.insertId, id_alumno: body.id_alumno, id_materia: body.id_materia }
     }
 
-    async getMateriasByAlumno(alumnoId, incluirBajas) {
-        let sql = `SELECT m.*, c.nombre_carrera FROM materia m
+    async getInscripciones(alumnoId, incluirBajas) {
+        let sql = `SELECT i.id_alumno, i.id_materia, m.*, c.nombre_carrera FROM materia m
                    INNER JOIN inscripcion i ON m.id = i.id_materia
-                   INNER JOIN carreras c ON m.carrera = c.id
-                   WHERE i.id_alumno = ?`
-        if (!incluirBajas) sql += ' AND i.fecha_baja IS NULL AND m.fecha_baja IS NULL'
-        const [rows] = await pool.query(sql, [alumnoId])
+                   INNER JOIN carreras c ON m.carrera = c.id`
+        const params = []
+        if (alumnoId) {
+            sql += ' WHERE i.id_alumno = ?'
+            params.push(alumnoId)
+        }
+        if (!incluirBajas) {
+            sql += alumnoId ? ' AND' : ' WHERE'
+            sql += ' i.fecha_baja IS NULL AND m.fecha_baja IS NULL'
+        }
+        const [rows] = await pool.query(sql, params)
         return rows
     }
 
     async getAlumnosByMateria(materiaId, incluirBajas) {
-        let sql = `SELECT u.*, r.rol FROM usuario u
+        let sql = `SELECT u.id, u.nombre, u.mail, u.usuario FROM usuario u
                    INNER JOIN inscripcion i ON u.id = i.id_alumno
-                   INNER JOIN rol r ON u.rol = r.id
-                   WHERE i.id_materia = ? AND r.rol = 'Alumno'`
+                   WHERE i.id_materia = ? AND u.rol = 3`
         if (!incluirBajas) sql += ' AND i.fecha_baja IS NULL AND u.fecha_baja IS NULL'
         const [rows] = await pool.query(sql, [materiaId])
         return rows

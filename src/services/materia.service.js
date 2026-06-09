@@ -63,3 +63,5 @@ class MateriaService{
         return { message: 'Baja logica exitosa', id }
     }
 }
+
+module.exports = MateriaService

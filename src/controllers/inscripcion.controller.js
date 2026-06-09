@@ -10,10 +10,12 @@ async function postInscripcion(req, res, next) {
     }
 }
 
-async function getMateriasByAlumno(req, res, next) {
+async function getInscripciones(req, res, next) {
     try {
-        const materias = await service.getMateriasByAlumno(req.params.id, req.query.incluirBajas)
-        res.json(materias)
+        const alumnoId = req.query.alumnoId
+        const incluirBajas = req.query.incluirBajas === 'true'
+        const resultado = await service.getInscripciones(alumnoId, incluirBajas)
+        res.json(resultado)
     } catch (error) {
         next(error)
     }
@@ -21,8 +23,10 @@ async function getMateriasByAlumno(req, res, next) {
 
 async function getAlumnosByMateria(req, res, next) {
     try {
-        const alumnos = await service.getAlumnosByMateria(req.params.id, req.query.incluirBajas)
-        res.json(alumnos)
+        const { id } = req.params
+        const incluirBajas = req.query.incluirBajas === 'true'
+        const resultado = await service.getAlumnosByMateria(id, incluirBajas)
+        res.json(resultado)
     } catch (error) {
         next(error)
     }
@@ -37,4 +41,4 @@ async function deleteInscripcion(req, res, next) {
     }
 }
 
-module.exports = { postInscripcion, getMateriasByAlumno, getAlumnosByMateria, deleteInscripcion }
+module.exports = { postInscripcion, getInscripciones, getAlumnosByMateria, deleteInscripcion }

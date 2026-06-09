@@ -11,4 +11,4 @@ function validator(schema, property) {
     }
 }
 
-module.exports = validator;
+module.exports = {validator}

@@ -1,7 +1,7 @@
 const express = require('express')
 const { getMaterias, getMateria, postMateria, putMateria, deleteMateria } = require('../controllers/materia.controller')
 const { getAlumnosByMateria } = require('../controllers/inscripcion.controller')
-const { validator } = require('../middlewares/validatorHandler')
+const { validator } = require('../middleware/validatorHandler')
 const { createMateriaSchema, updateMateriaSchema } = require('../schemas/materia.schema')
 
 const materiaRouter = express.Router()

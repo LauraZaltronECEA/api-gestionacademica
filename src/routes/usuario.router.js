@@ -2,7 +2,7 @@ const express = require('express');
 const usuarioRouter = express.Router();
 
 const{ getUsuarios, getUsuario, postUsuario, putUsuario, deleteUsuario } = require('../controllers/usuario.controller.js');
-const validator = require('../middleware/validatorHandler');
+const {validator} = require('../middleware/validatorHandler');
 const { createUsuarioSchema, updateUsuarioSchema, getUsuarioSchema } = require('../schemas/usuario.schema.js');
 
 usuarioRouter.get('/', getUsuarios);
