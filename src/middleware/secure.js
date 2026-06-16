@@ -5,7 +5,6 @@ function attachUser(req) {
     const data = decode(req.headers.authorization)
     if (data) {
         req.user = data
-        req.body.idUsuario = data.id
         return true
     }
     return false
