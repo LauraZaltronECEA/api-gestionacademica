@@ -9,7 +9,9 @@ const { createUsuarioSchema, updateUsuarioSchema, getUsuarioSchema, loginSchema 
 usuarioRouter.post('/login', validator(loginSchema, 'body'), login);
 usuarioRouter.get('/', getUsuarios);
 usuarioRouter.get('/:id', validator(getUsuarioSchema, 'params'), getUsuario);
-usuarioRouter.post('/', checkAdmin(), validator(createUsuarioSchema, 'body'), postUsuario);
+usuarioRouter.post('/',validator(createUsuarioSchema, 'body'), postUsuario);
+
+//usuarioRouter.post('/', checkAdmin(), validator(createUsuarioSchema, 'body'), postUsuario);
 usuarioRouter.put('/:id', checkAdmin(), validator(getUsuarioSchema, 'params'), validator(updateUsuarioSchema, 'body'), putUsuario);
 usuarioRouter.delete('/:id', checkAdmin(), validator(getUsuarioSchema, 'params'), deleteUsuario);
 

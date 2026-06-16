@@ -1,0 +1,485 @@
+================================================================================
+  GUIA DE PRUEBAS POSTMAN - API GESTION ACADEMICA
+  Taller de Programación 2
+================================================================================
+
+Base URL: http://localhost:3000
+
+La API devuelve JSON en todas las respuestas.
+Los endpoints protegidos requieren header: Authorization: Bearer <token>
+
+
+================================================================================
+  1. PRIMEROS PASOS - CREAR DATOS INICIALES
+================================================================================
+
+1.1. CREAR CARRERA
+-------------------
+  POST http://localhost:3000/carreras
+  Body (raw / JSON):
+  {
+    "nombre_carrera": "Licenciatura en Sistemas"
+  }
+
+  Respuesta esperada: 201 Created con { id, nombre_carrera }
+
+// esto no funciona, lo tengo que harcodear en la bd// 
+
+1.2. CREAR USUARIO ADMIN
+--------------------------
+  POST http://localhost:3000/usuarios
+  Body (raw / JSON):
+  {
+    "nombre": "Admin Principal",
+    "mail": "admin@test.com",
+    "usuario": "admin",
+    "password": "123456",
+    "rol": 1
+  }
+
+  Respuesta esperada: 201 Created con { id, nombre, mail, usuario, rol }
+
+
+1.3. CREAR USUARIO COORDINADOR
+-------------------------------
+  POST http://localhost:3000/usuarios
+  Body (raw / JSON):
+  {
+    "nombre": "Coordinador Test",
+    "mail": "coord@test.com",
+    "usuario": "coordinador",
+    "password": "123456",
+    "rol": 2
+  }
+
+  Respuesta esperada: 201 Created
+
+
+1.4. CREAR MATERIA
+-------------------
+  POST http://localhost:3000/materias
+  Body (raw / JSON):
+  {
+    "nombre_materia": "Programación I",
+    "carrera": 1
+  }
+
+  Respuesta esperada: 201 Created con { id, nombre_materia, carrera }
+
+// hacer primero login, sino no tengo permisoss //
+
+1.5. LOGIN COMO ADMIN (guardar token)
+---------------------------------------
+  POST http://localhost:3000/usuarios/login
+  Body (raw / JSON):
+  {
+    "usuario": "admin",
+    "pass": "123456"
+  }
+
+  Respuesta esperada: 200 OK con { login: true, token: "eyJ..." }
+  >> GUARDAR ESTE TOKEN (lo usaremos como "TOKEN_ADMIN")
+
+
+================================================================================
+  2. GESTION DE USUARIOS
+================================================================================
+
+2.1. LOGIN - credenciales correctas
+-------------------------------------
+  POST http://localhost:3000/usuarios/login
+  Body: { "usuario": "admin", "pass": "123456" }
+  >> Debe devolver 200 + token
+
+2.2. LOGIN - credenciales incorrectas
+---------------------------------------
+  POST http://localhost:3000/usuarios/login
+  Body: { "usuario": "admin", "pass": "wrongpass" }
+  >> Debe devolver 401 { message: "Datos de login incorrectos" }
+
+2.3. LOGIN - validacion Joi (campos faltantes)
+------------------------------------------------
+  POST http://localhost:3000/usuarios/login
+  Body: { "usuario": "admin" }
+  >> Debe devolver 400 (error de validacion)
+
+2.4. LISTAR USUARIOS
+-----------------------
+  GET http://localhost:3000/usuarios
+  Header: Authorization: Bearer TOKEN_ADMIN
+  >> Debe devolver todos los usuarios activos
+
+2.5. LISTAR USUARIOS (incluyendo bajas)
+------------------------------------------
+  GET http://localhost:3000/usuarios?incluirBajas=true
+  Header: Authorization: Bearer TOKEN_ADMIN
+  >> Debe devolver todos los usuarios (activos + dados de baja)
+
+2.6. VER USUARIO POR ID
+--------------------------
+  GET http://localhost:3000/usuarios/1
+  Header: Authorization: Bearer TOKEN_ADMIN
+  >> Debe devolver el usuario con id=1
+
+2.7. VER USUARIO INEXISTENTE
+------------------------------
+  GET http://localhost:3000/usuarios/9999
+  Header: Authorization: Bearer TOKEN_ADMIN
+  >> Debe devolver 404
+
+2.8. CREAR USUARIO (sin token)
+--------------------------------
+  POST http://localhost:3000/usuarios
+  Body: { "nombre": "Test", "mail": "t@t.com", "usuario": "test", "password": "123456", "rol": 3 }
+  SIN header Authorization
+  >> Debe devolver 401
+
+2.9. CREAR USUARIO (con token de no-admin)
+---------------------------------------------
+  POST http://localhost:3000/usuarios
+  Header: Authorization: Bearer TOKEN_ALUMNO
+  Body: { "nombre": "Test", "mail": "t@t.com", "usuario": "test", "password": "123456", "rol": 3 }
+  >> Debe devolver 401 (solo admin puede crear usuarios)
+
+2.10. ELIMINAR USUARIO (baja logica)
+---------------------------------------
+  DELETE http://localhost:3000/usuarios/1
+  Header: Authorization: Bearer TOKEN_ADMIN
+  >> Debe devolver 200 { message: "Baja logica exitosa", id: 1 }
+  >> Luego GET /usuarios ya no debe mostrar ese usuario (a menos que use incluirBajas=true)
+
+
+================================================================================
+  3. GESTION DE ALUMNOS
+================================================================================
+
+NOTA: "Alumno" es un usuario con rol=3. Se crean alumnos via POST /alumnos.
+
+3.1. CREAR ALUMNO (admin)
+---------------------------
+  POST http://localhost:3000/alumnos
+  Header: Authorization: Bearer TOKEN_ADMIN
+  Body (raw / JSON):
+  {
+    "nombre": "Juan Perez",
+    "mail": "juan@test.com",
+    "usuario": "juanperez",
+    "password": "123456"
+  }
+
+  Respuesta esperada: 201 Created
+  >> Guardar el ID devuelto como "ID_ALUMNO"
+
+3.2. CREAR ALUMNO (sin ser admin)
+-----------------------------------
+  POST http://localhost:3000/alumnos
+  SIN header Authorization
+  Body: { "nombre": "Falso", "mail": "f@f.com", "usuario": "falso", "password": "123456" }
+  >> Debe devolver 401 "Token requerido"
+
+3.3. LOGIN COMO ALUMNO (guardar token)
+----------------------------------------
+  POST http://localhost:3000/usuarios/login
+  Body: { "usuario": "juanperez", "pass": "123456" }
+  >> Guardar token como "TOKEN_ALUMNO"
+
+3.4. LISTAR ALUMNOS (autenticado)
+-----------------------------------
+  GET http://localhost:3000/alumnos
+  Header: Authorization: Bearer TOKEN_ADMIN
+  >> Debe devolver lista de alumnos activos
+
+3.5. LISTAR ALUMNOS (sin autenticar)
+--------------------------------------
+  GET http://localhost:3000/alumnos
+  SIN header Authorization
+  >> Debe devolver 401 "Token requerido"
+
+3.6. LISTAR ALUMNOS con incluirBajas=true (admin/coordinador)
+---------------------------------------------------------------
+  GET http://localhost:3000/alumnos?incluirBajas=true
+  Header: Authorization: Bearer TOKEN_ADMIN
+  >> Debe devolver TODOS los alumnos (activos e inactivos)
+
+3.7. LISTAR ALUMNOS con incluirBajas=true (alumno comun)
+-----------------------------------------------------------
+  GET http://localhost:3000/alumnos?incluirBajas=true
+  Header: Authorization: Bearer TOKEN_ALUMNO
+  >> Debe IGNORAR el flag (solo devuelve activos)
+
+3.8. VER ALUMNO POR ID (admin)
+--------------------------------
+  GET http://localhost:3000/alumnos/ID_ALUMNO
+  Header: Authorization: Bearer TOKEN_ADMIN
+  >> Debe devolver el alumno
+
+3.9. VER ALUMNO POR ID (el mismo alumno)
+-------------------------------------------
+  GET http://localhost:3000/alumnos/ID_ALUMNO
+  Header: Authorization: Bearer TOKEN_ALUMNO
+  >> Debe devolver el alumno (puede verse a si mismo)
+
+3.10. VER ALUMNO POR ID (otro alumno)
+----------------------------------------
+  GET http://localhost:3000/alumnos/1
+  Header: Authorization: Bearer TOKEN_ALUMNO
+  (suponiendo que ID_ALUMNO != 1)
+  >> Debe devolver 401 "Privilegios insuficientes"
+
+3.11. ACTUALIZAR ALUMNO (admin)
+----------------------------------
+  PUT http://localhost:3000/alumnos/ID_ALUMNO
+  Header: Authorization: Bearer TOKEN_ADMIN
+  Body: { "nombre": "Juan Perez Modificado", "mail": "juan2@test.com" }
+  >> Debe devolver 200 { message: "Usuario actualizado", id: ID_ALUMNO }
+
+3.12. ACTUALIZAR ALUMNO (el mismo alumno)
+--------------------------------------------
+  PUT http://localhost:3000/alumnos/ID_ALUMNO
+  Header: Authorization: Bearer TOKEN_ALUMNO
+  Body: { "nombre": "Juan Perez Editado por si mismo" }
+  >> Debe devolver 200
+
+3.13. ACTUALIZAR ALUMNO (otro alumno - sin permisos)
+-------------------------------------------------------
+  PUT http://localhost:3000/alumnos/1
+  Header: Authorization: Bearer TOKEN_ALUMNO
+  (si ID_ALUMNO no es 1)
+  >> Debe devolver 401
+
+3.14. ELIMINAR ALUMNO (baja logica - admin)
+----------------------------------------------
+  DELETE http://localhost:3000/alumnos/ID_ALUMNO
+  Header: Authorization: Bearer TOKEN_ADMIN
+  >> Debe devolver 200 { message: "Baja logica exitosa", id: ID_ALUMNO }
+
+3.15. ELIMINAR ALUMNO (alumno comun - sin permisos)
+-------------------------------------------------------
+  DELETE http://localhost:3000/alumnos/ID_ALUMNO
+  Header: Authorization: Bearer TOKEN_ALUMNO
+  >> Debe devolver 401 (solo admin puede eliminar)
+
+
+================================================================================
+  4. GESTION DE MATERIAS
+================================================================================
+
+4.1. CREAR MATERIA (admin)
+----------------------------
+  POST http://localhost:3000/materias
+  Header: Authorization: Bearer TOKEN_ADMIN
+  Body: { "nombre_materia": "Programacion II", "carrera": 1 }
+  >> 201 Created, guardar ID como "ID_MATERIA"
+
+4.2. CREAR MATERIA (sin ser admin)
+-------------------------------------
+  POST http://localhost:3000/materias
+  Header: Authorization: Bearer TOKEN_ALUMNO
+  Body: { "nombre_materia": "Test", "carrera": 1 }
+  >> Debe devolver 401
+
+4.3. LISTAR MATERIAS
+----------------------
+  GET http://localhost:3000/materias
+  (No requiere autenticacion)
+  >> Debe devolver lista de materias activas
+
+4.4. LISTAR MATERIAS (incluyendo bajas)
+-----------------------------------------
+  GET http://localhost:3000/materias?incluirBajas=true
+  >> Debe devolver todas las materias
+
+4.5. VER MATERIA POR ID
+--------------------------
+  GET http://localhost:3000/materias/1
+  >> Debe devolver la materia con su carrera
+
+4.6. ACTUALIZAR MATERIA (admin)
+----------------------------------
+  PUT http://localhost:3000/materias/ID_MATERIA
+  Header: Authorization: Bearer TOKEN_ADMIN
+  Body: { "nombre_materia": "Programacion II - Actualizada" }
+  >> 200 OK
+
+4.7. ELIMINAR MATERIA (baja logica - admin)
+----------------------------------------------
+  DELETE http://localhost:3000/materias/ID_MATERIA
+  Header: Authorization: Bearer TOKEN_ADMIN
+  >> 200 { message: "Baja logica exitosa", id }
+
+
+================================================================================
+  5. GESTION DE INSCRIPCIONES
+================================================================================
+
+Antes de empezar: asegurate de tener:
+  - ID_ALUMNO (un alumno activo)
+  - ID_MATERIA (una materia activa)
+  - TOKEN_ALUMNO (token del alumno creado)
+  - TOKEN_ADMIN
+
+5.1. INSCRIBIR ALUMNO (admin - inscribe a cualquier alumno)
+--------------------------------------------------------------
+  POST http://localhost:3000/inscripciones
+  Header: Authorization: Bearer TOKEN_ADMIN
+  Body: { "id_alumno": ID_ALUMNO, "id_materia": ID_MATERIA }
+  >> 201 Created, guardar ID como "ID_INSCRIPCION"
+
+5.2. INSCRIBIR ALUMNO (el alumno se inscribe a si mismo)
+------------------------------------------------------------
+  POST http://localhost:3000/inscripciones
+  Header: Authorization: Bearer TOKEN_ALUMNO
+  Body: { "id_materia": ID_MATERIA2 }
+  (sin enviar id_alumno - se toma del token)
+  >> Debe devolver 201, forzando id_alumno = ID_ALUMNO
+
+5.3. INSCRIBIR ALUMNO (alumno intenta inscribir a otro)
+----------------------------------------------------------
+  POST http://localhost:3000/inscripciones
+  Header: Authorization: Bearer TOKEN_ALUMNO
+  Body: { "id_alumno": 999, "id_materia": 1 }
+  >> Debe inscribir al alumno del token, NO al id=999
+  >> (El service fuerza id_alumno = user.id para no-admins)
+
+5.4. INSCRIBIR ALUMNO (sin autenticar)
+-----------------------------------------
+  POST http://localhost:3000/inscripciones
+  SIN header Authorization
+  Body: { "id_alumno": ID_ALUMNO, "id_materia": ID_MATERIA }
+  >> Debe devolver 401 "Token requerido"
+
+5.5. VER MATERIAS DE UN ALUMNO (admin / coordinador / el mismo alumno)
+------------------------------------------------------------------------
+  GET http://localhost:3000/alumnos/ID_ALUMNO/materias
+  Header: Authorization: Bearer TOKEN_ADMIN
+  >> Debe devolver las materias en las que esta inscripto el alumno
+
+  GET http://localhost:3000/alumnos/ID_ALUMNO/materias
+  Header: Authorization: Bearer TOKEN_ALUMNO
+  >> Debe devolver lo mismo (el alumno puede ver sus materias)
+
+5.6. VER MATERIAS DE OTRO ALUMNO (sin permisos)
+---------------------------------------------------
+  GET http://localhost:3000/alumnos/1/materias
+  Header: Authorization: Bearer TOKEN_ALUMNO
+  >> Si ID_ALUMNO != 1, debe devolver 401
+
+5.7. VER ALUMNOS DE UNA MATERIA (admin / coordinador)
+--------------------------------------------------------
+  GET http://localhost:3000/materias/ID_MATERIA/alumnos
+  Header: Authorization: Bearer TOKEN_ADMIN
+  >> Debe devolver los alumnos inscriptos en esa materia
+
+5.8. VER ALUMNOS DE UNA MATERIA (alumno comun - sin permisos)
+----------------------------------------------------------------
+  GET http://localhost:3000/materias/ID_MATERIA/alumnos
+  Header: Authorization: Bearer TOKEN_ALUMNO
+  >> Debe devolver 401 (solo admin o coordinador)
+
+5.9. VER ALUMNOS DE UNA MATERIA (sin autenticar)
+---------------------------------------------------
+  GET http://localhost:3000/materias/ID_MATERIA/alumnos
+  SIN header Authorization
+  >> Debe devolver 401
+
+5.10. ELIMINAR INSCRIPCION (admin - cualquier inscripcion)
+-------------------------------------------------------------
+  DELETE http://localhost:3000/inscripciones/ID_INSCRIPCION
+  Header: Authorization: Bearer TOKEN_ADMIN
+  >> 200 { message: "Baja logica exitosa", id }
+
+5.11. ELIMINAR INSCRIPCION (alumno - solo sus propias inscripciones)
+-----------------------------------------------------------------------
+  Primero crear una inscripcion nueva (paso 5.1 o 5.2)
+  Luego:
+  DELETE http://localhost:3000/inscripciones/ID_INSCRIPCION
+  Header: Authorization: Bearer TOKEN_ALUMNO
+  >> 200 OK (el alumno elimina su propia inscripcion)
+
+5.12. ELIMINAR INSCRIPCION DE OTRO (alumno comun)
+----------------------------------------------------
+  DELETE http://localhost:3000/inscripciones/1
+  Header: Authorization: Bearer TOKEN_ALUMNO
+  (si la inscripcion 1 pertenece a otro alumno)
+  >> Debe devolver 404 (la query no encuentra la inscripcion porque filtra por alumno)
+
+
+================================================================================
+  6. RESUMEN DE PERMISOS POR ROL
+================================================================================
+
+  Endpoint                          | Admin | Coordinador | Alumno | Publico
+  ----------------------------------|-------|-------------|--------|--------
+  POST /usuarios/login              |   -   |      -      |   -    |   SI
+  GET /usuarios                     |  SI   |     SI      |   -    |   -
+  GET /usuarios/:id                 |  SI   |     SI      |   -    |   -
+  POST /usuarios                    |  SI   |     -       |   -    |   -
+  PUT /usuarios/:id                 |  SI   |     -       |   -    |   -
+  DELETE /usuarios/:id              |  SI   |     -       |   -    |   -
+  GET /alumnos                      |  SI   |     SI      |   SI   |   -
+  GET /alumnos/:id                  |  SI   |     SI      |  Solo  |
+                                    |       |             |  propio|
+  GET /alumnos/:id/materias         |  SI   |     SI      |  Solo  |
+                                    |       |             |  propio|
+  POST /alumnos                     |  SI   |     -       |   -    |   -
+  PUT /alumnos/:id                  |  SI   |     -       |  Solo  |
+                                    |       |             |  propio|
+  DELETE /alumnos/:id               |  SI   |     -       |   -    |   -
+  GET /materias                     |   -   |      -      |   -    |   SI
+  GET /materias/:id                 |   -   |      -      |   -    |   SI
+  POST /materias                    |  SI   |     -       |   -    |   -
+  PUT /materias/:id                 |  SI   |     -       |   -    |   -
+  DELETE /materias/:id              |  SI   |     -       |   -    |   -
+  GET /materias/:id/alumnos         |  SI   |     SI      |   -    |   -
+  POST /inscripciones               |  SI   |     -       |  Solo  |
+                                    |       |             |  propio|
+  DELETE /inscripciones/:id         |  SI   |     -       |  Solo  |
+                                    |       |             |  propio|
+
+
+================================================================================
+  7. VALIDACIONES (Joi)
+================================================================================
+
+  Cada endpoint verifica el schema correspondiente.
+  Ejemplos de errores de validacion (400 Bad Request):
+
+  - POST /alumnos sin campo "nombre"     -> "nombre" is required
+  - POST /alumnos con mail invalido       -> "email" must be a valid email
+  - POST /alumnos con password < 6 chars -> "password" length must be at least 6
+
+  Todos los schemas estan en src/schemas/
+
+
+================================================================================
+  8. NOTAS SOBRE BAJA LOGICA
+================================================================================
+
+  - Ningun DELETE elimina registros fisicamente.
+  - Todos marcan fecha_baja con la fecha actual.
+  - Las listas por defecto excluyen registros con fecha_baja IS NOT NULL.
+  - Usar ?incluirBajas=true para ver todos (sujeto a permisos).
+  - La auditoria se registra en: usuario_alta, fecha_alta,
+    usuario_modificacion, fecha_modificacion, usuario_baja, fecha_baja.
+
+
+================================================================================
+  9. FLUJO COMPLETO RECOMENDADO
+================================================================================
+
+  1. Crear una carrera (POST /carreras)
+  2. Crear usuario admin (POST /usuarios con rol=1)
+  3. Login como admin (POST /usuarios/login) -> guardar TOKEN_ADMIN
+  4. Crear materias (POST /materias con TOKEN_ADMIN)
+  5. Crear alumno (POST /alumnos con TOKEN_ADMIN)
+  6. Login como alumno (POST /usuarios/login) -> guardar TOKEN_ALUMNO
+  7. Inscribir alumno (POST /inscripciones con TOKEN_ADMIN)
+  8. Ver materias del alumno (GET /alumnos/:id/materias)
+  9. Ver alumnos de la materia (GET /materias/:id/alumnos)
+  10. Eliminar inscripcion (DELETE /inscripciones/:id)
+  11. Dar de baja alumno (DELETE /alumnos/:id con TOKEN_ADMIN)
+  12. Verificar baja (GET /alumnos con y sin ?incluirBajas=true)
+
+================================================================================
+  FIN DEL DOCUMENTO
+================================================================================

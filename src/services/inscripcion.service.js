@@ -1,13 +1,14 @@
 const { pool } = require('../db/connection')
 
 class InscripcionService {
-    async create(body) {
+    async create(body, user) {
+        const idAlumno = (user && user.admin === 1) ? body.id_alumno : user.id
         const sql = `INSERT INTO inscripcion (id_alumno, id_materia, fecha_alta, usuario_alta)
                      VALUES (?, ?, NOW(), ?)`
         const [result] = await pool.query(sql, [
-            body.id_alumno, body.id_materia, body.usuario_alta || null
+            idAlumno, body.id_materia, body.usuario_alta || null
         ])
-        return { id: result.insertId, id_alumno: body.id_alumno, id_materia: body.id_materia }
+        return { id: result.insertId, id_alumno: idAlumno, id_materia: body.id_materia }
     }
 
     async getInscripciones(alumnoId, incluirBajas) {
@@ -36,9 +37,14 @@ class InscripcionService {
         return rows
     }
 
-    async softDelete(id) {
-        const sql = `UPDATE inscripcion SET fecha_baja = NOW(), usuario_baja = ? WHERE id = ? AND fecha_baja IS NULL`
-        const [result] = await pool.query(sql, [null, id])
+    async softDelete(id, user) {
+        let sql = `UPDATE inscripcion SET fecha_baja = NOW(), usuario_baja = ? WHERE id = ? AND fecha_baja IS NULL`
+        const params = [null, id]
+        if (user && user.admin !== 1) {
+            sql += ' AND id_alumno = ?'
+            params.push(user.id)
+        }
+        const [result] = await pool.query(sql, params)
         if (result.affectedRows === 0) {
             const error = new Error('Inscripcion no encontrada')
             error.status = 404

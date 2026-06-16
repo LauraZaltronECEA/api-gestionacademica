@@ -3,7 +3,7 @@ const service = new InscripcionService()
 
 async function postInscripcion(req, res, next) {
     try {
-        const inscripcion = await service.create(req.body)
+        const inscripcion = await service.create(req.body, req.user)
         res.status(201).json(inscripcion)
     } catch (error) {
         next(error)
@@ -32,13 +32,24 @@ async function getAlumnosByMateria(req, res, next) {
     }
 }
 
-async function deleteInscripcion(req, res, next) {
+async function getMateriasByAlumno(req, res, next) {
     try {
-        const resultado = await service.softDelete(req.params.id)
+        const { id } = req.params
+        const incluirBajas = req.query.incluirBajas === 'true'
+        const resultado = await service.getInscripciones(id, incluirBajas)
         res.json(resultado)
     } catch (error) {
         next(error)
     }
 }
 
-module.exports = { postInscripcion, getInscripciones, getAlumnosByMateria, deleteInscripcion }
+async function deleteInscripcion(req, res, next) {
+    try {
+        const resultado = await service.softDelete(req.params.id, req.user)
+        res.json(resultado)
+    } catch (error) {
+        next(error)
+    }
+}
+
+module.exports = { postInscripcion, getInscripciones, getAlumnosByMateria, getMateriasByAlumno, deleteInscripcion }

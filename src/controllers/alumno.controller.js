@@ -1,11 +1,12 @@
 const AlumnoService = require('../services/alumno.service')
-const pool = require('../db/connection').pool
 
-const service = new AlumnoService(pool)
+const service = new AlumnoService()
 
-async function getAlumnos(req, res, next){
-    try{
-        const data = await service.getAll(req.query.incluirBajas)
+async function getAlumnos(req, res, next) {
+    try {
+        const incluirBajas = req.query.incluirBajas === 'true'
+        const puedeVerBajas = req.user && (req.user.admin === 1 || req.user.admin === 2)
+        const data = await service.getAll(incluirBajas && puedeVerBajas)
         res.json(data)
     } catch (error) {
         next(error)

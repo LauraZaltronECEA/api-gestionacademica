@@ -2,7 +2,7 @@ const joi = require('joi');
 
 const id = joi.number().integer().positive().min(1);
 const nombre = joi.string().min(3).max(50).required();
-const email = joi.string().email().required();
+const mail = joi.string().email().required();
 const usuario = joi.string().min(3).max(30).required();
 const password = joi.string().min(6).max(60).required();
 const rol = joi.number().integer().valid(1, 2, 3).required();
@@ -10,7 +10,7 @@ const rol = joi.number().integer().valid(1, 2, 3).required();
 
 const createUsuarioSchema = joi.object({
     nombre: nombre.required(),
-    email: email.required(),
+    mail: mail.required(),
     usuario: usuario.required(),
     password: password.required(),
     rol: rol.required()
@@ -18,7 +18,7 @@ const createUsuarioSchema = joi.object({
 
 const updateUsuarioSchema = joi.object({
     nombre: nombre,
-    email: email,
+    mail: mail,
     usuario: usuario,
     password: password,
     rol: rol
