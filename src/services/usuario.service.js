@@ -1,6 +1,38 @@
-const {pool} = require('../db/connection')
+const { pool } = require('../db/connection')
+const bcrypt = require('bcrypt')
+const { sign } = require('../utils/jwt')
 
 class UsuarioService {
+
+    async login(data) {
+        const sql =
+            `SELECT id, nombre, password, rol as admin
+             FROM usuario
+             WHERE usuario = ?`
+        const [usuario] = await pool.query(sql, [data.usuario])
+
+        if (usuario.length > 0) {
+            const { id, nombre, admin, password } = usuario[0]
+            return bcrypt.compare(data.pass, password)
+                .then(sonIguales => {
+                    if (sonIguales) {
+                        const token = { token: sign({ id, nombre, admin }) }
+                        return { login: true, ...token }
+                    } else {
+                        console.error('Contraseña inválida')
+                        const error = new Error('Datos de login incorrectos')
+                        error.status = 401
+                        throw error
+                    }
+                })
+        } else {
+            console.error('Usuario inválido')
+            const error = new Error('Datos de login incorrectos')
+            error.status = 401
+            throw error
+        }
+    }
+
     async getAll(incluirBajas) {
         let sql = `SELECT u.*, r.rol FROM usuario u INNER JOIN rol r ON u.rol = r.id`
         if (!incluirBajas) sql += ' WHERE u.fecha_baja IS NULL'
@@ -20,10 +52,11 @@ class UsuarioService {
     }
 
     async create(body) {
+        const hash = await bcrypt.hash(body.password, 10)
         const sql = `INSERT INTO usuario (nombre, mail, usuario, password, rol, fecha_alta, usuario_alta)
                      VALUES (?, ?, ?, ?, ?, NOW(), ?)`
         const [result] = await pool.query(sql, [
-            body.nombre, body.mail, body.usuario, body.password,
+            body.nombre, body.mail, body.usuario, hash,
             body.rol, body.usuario_alta || null
         ])
         return { id: result.insertId, nombre: body.nombre, mail: body.mail, usuario: body.usuario, rol: body.rol }
@@ -56,9 +89,9 @@ class UsuarioService {
         return { message: 'Usuario actualizado', id }
     }
 
-    async softDelete(id) {
+    async softDelete(id, usuarioBaja) {
         const sql = `UPDATE usuario SET fecha_baja = NOW(), usuario_baja = ? WHERE id = ? AND fecha_baja IS NULL`
-        const [result] = await pool.query(sql, [null, id])
+        const [result] = await pool.query(sql, [usuarioBaja || null, id])
         if (result.affectedRows === 0) {
             const error = new Error('Usuario no encontrado')
             error.status = 404

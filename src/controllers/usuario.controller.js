@@ -1,59 +1,63 @@
 const UsuarioService = require('../services/usuario.service');
-const pool = require('../db/connection').pool
 
-const service = new UsuarioService(pool)
+const service = new UsuarioService()
 
-async function getUsuarios(req, res, next){
-    try{
-        const data = await service.get(req.query.incluirBajas)
+async function login(req, res, next) {
+    try {
+        const data = await service.login(req.body)
         res.json(data)
+    } catch (error) {
+        next(error)
     }
-    catch (error) {
+}
+
+async function getUsuarios(req, res, next) {
+    try {
+        const data = await service.getAll(req.query.incluirBajas)
+        res.json(data)
+    } catch (error) {
         next(error)
     }
 }
 
 async function getUsuario(req, res, next) {
-    try{
+    try {
         const data = await service.getById(req.params.id)
         data ? res.json(data) : res.status(404).json({ message: 'Usuario no encontrado' })
-    }
-    catch (error) {
+    } catch (error) {
         next(error)
     }
 }
 
 async function postUsuario(req, res, next) {
-    try{
+    try {
         const data = await service.create(req.body)
         res.status(201).json(data)
-    }
-    catch (error) {
+    } catch (error) {
         next(error)
     }
 }
 
 async function putUsuario(req, res, next) {
-    try{
+    try {
         await service.update(req.params.id, req.body)
         res.json({ message: 'Usuario actualizado' })
-    }
-    catch (error) {
+    } catch (error) {
         next(error)
     }
 }
 
 async function deleteUsuario(req, res, next) {
-    try{
-        await service.delete(req.params.id, req.body.usuario_baja)
+    try {
+        await service.softDelete(req.params.id, req.body.usuario_baja)
         res.json({ message: 'Usuario eliminado' })
-    }
-    catch (error) {
+    } catch (error) {
         next(error)
     }
 }
 
 module.exports = {
+    login,
     getUsuarios,
     getUsuario,
     postUsuario,

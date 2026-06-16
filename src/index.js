@@ -1,15 +1,13 @@
 require('dotenv').config();
 const express = require('express');
-const { testConnection } = require('./src/db/connection');
+const { testConnection } = require('./db/connection');
 
-require('dotenv').config();
+const usuarioRouter = require('./routes/usuario.router');
+const alumnoRouter = require('./routes/alumno.router');
+const materiaRouter = require('./routes/materia.router');
+const inscripcionRouter = require('./routes/inscripcion.router');
 
-const usuarioRouter = require('./src/routes/usuario.router');
-const alumnoRouter = require('./src/routes/alumno.router');
-const materiaRouter = require('./src/routes/materia.router');
-const inscripcionRouter = require('./src/routes/inscripcion.router');
-
-const { errorLog, errorHandler } = require('./src/middleware/errorHandler');
+const { errorLog, errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
 

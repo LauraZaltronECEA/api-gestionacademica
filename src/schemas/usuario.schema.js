@@ -29,8 +29,17 @@ const getUsuarioSchema = joi.object({
     id: id.required()
 });
 
+const loginUsuario = joi.string().min(3).max(30).required();
+const loginPass = joi.string().min(6).max(60).required();
+
+const loginSchema = joi.object({
+    usuario: loginUsuario,
+    pass: loginPass
+});
+
 module.exports = {
     createUsuarioSchema,
     updateUsuarioSchema,
-    getUsuarioSchema
+    getUsuarioSchema,
+    loginSchema
 }
